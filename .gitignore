@@ -1,0 +1,25 @@
+
+# Python 虚拟环境
+.venv/
+venv/
+
+# Python 缓存
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Streamlit 密钥文件
+.streamlit/secrets.toml
+
+# 环境变量
+.env
+.env.*
+
+# 编辑器配置
+.vscode/
+.idea/
+
+# 临时文件
+*.log
+*.tmp
+~$*
