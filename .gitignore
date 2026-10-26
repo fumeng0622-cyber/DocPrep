@@ -23,3 +23,9 @@ __pycache__/
 *.log
 *.tmp
 ~$*
+
+# 本地开发备份
+local_backups/
+
+# 本地测试文档
+samples/
