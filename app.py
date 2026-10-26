@@ -1,5 +1,4 @@
 
-import json
 from io import BytesIO
 from dataclasses import replace
 
@@ -7,13 +6,13 @@ import streamlit as st
 from docx import Document
 
 from chunk_builder import build_chunks, split_long_text
+from chunk_exporter import chunks_to_json, chunks_to_markdown
 from excel_parser import parse_xlsx
 from pdf_parser import parse_pdf
 from text_parser import parse_txt, parse_markdown
 from knowledge_processor import attach_section_context
 from rule_extractor import extract_rules
 from word_parser import parse_docx
-
 
 st.set_page_config(
     page_title="DocPrep - 文档预处理器",
@@ -74,35 +73,6 @@ def get_run_format(run, paragraph_style):
     }
 
 
-def chunks_to_json(chunks):
-    """把知识片段转换成 JSON 字符串。"""
-    return json.dumps(
-        [chunk.to_dict() for chunk in chunks],
-        ensure_ascii=False,
-        indent=2,
-    )
-
-
-def chunks_to_markdown(chunks):
-    """把知识片段转换成 Markdown 字符串。"""
-    markdown_parts = []
-
-    for index, chunk in enumerate(chunks, start=1):
-        subsection = chunk.metadata.get("subsection")
-
-        markdown_parts.append(
-            f"## 知识片段 {index}\n\n"
-            f"**一级章节：** {chunk.section or '未识别'}\n\n"
-            f"**二级标题：** {subsection or '未识别'}\n\n"
-            f"**内容类型：** "
-            f"{chunk.metadata.get('element_type', '未知')}\n\n"
-            f"{chunk.content}\n\n"
-            f"**来源文件：** {chunk.source_file}\n\n"
-            f"**来源类型：** {chunk.source_type}"
-            + (f"\n\n**来源页码：** {chunk.page_number}" if chunk.page_number is not None else "")
-        )
-
-    return "\n\n---\n\n".join(markdown_parts)
 
 
 def show_download_buttons(chunks, filename_prefix):
@@ -402,9 +372,9 @@ if uploaded_file is not None:
                         )
 
                     st.caption(
-                        "分块后片段数包含独立保留的标题、"
-                        "表格行和合并后的正文知识块。"
-                    )
+                            "分块后片段数包含独立保留的标题、"
+                            "合并后的正文知识块和表格知识块。"
+                        )
 
                     for index, chunk in enumerate(
                         merged_chunks,
@@ -416,8 +386,8 @@ if uploaded_file is not None:
 
                         if element_type == "merged_text":
                             type_name = "合并正文"
-                        elif element_type == "table_row":
-                            type_name = "表格"
+                        elif element_type == "merged_table":
+                            type_name = "合并表格"
                         elif chunk.metadata.get(
                             "heading_level"
                         ) is not None:

@@ -91,6 +91,47 @@ class TextParserTests(unittest.TestCase):
             len(chunk.content)
         )
 
+    def test_chapter_recognition(self):
+        """测试 TXT 章节标题识别和正文归属。"""
 
+        text = (
+            "第一章 人工智能基础\n"
+            "人工智能是一门学科。\n"
+            "第二章 机器学习\n"
+            "机器学习使用数据。"
+        )
+
+        result = parse_txt(
+            text.encode("utf-8"),
+            "章节测试.txt"
+        )
+
+        # 应当生成两个标题和两个正文
+        self.assertEqual(len(result), 4)
+
+        # 第一个知识块是标题
+        self.assertEqual(
+            result[0].metadata["element_type"],
+            "heading"
+        )
+
+        # 第二个知识块是正文
+        self.assertEqual(
+            result[1].metadata["element_type"],
+            "paragraph"
+        )
+
+        # 第一章正文属于第一章
+        self.assertEqual(
+            result[1].section,
+            "第一章 人工智能基础"
+        )
+
+        # 第二章正文属于第二章
+        self.assertEqual(
+            result[3].section,
+            "第二章 机器学习"
+        )
+        
 if __name__ == "__main__":
     unittest.main()

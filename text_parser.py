@@ -1,3 +1,4 @@
+import re
 
 from knowledge_schema import KnowledgeChunk
 
@@ -19,40 +20,84 @@ def decode_text(file_bytes):
 
 def parse_txt(file_bytes, filename):
     """
-    解析 TXT 文件，生成 KnowledgeChunk 列表。
-
-    file_bytes: 文件二进制内容
-    filename: 原始文件名
+    解析 TXT 文件，识别章节标题和正文。
     """
 
     text = decode_text(file_bytes)
-
-    # 统一换行符
     text = text.replace("\r\n", "\n").replace("\r", "\n")
-
-    # 去除文件首尾空白
     text = text.strip()
 
     if not text:
         return []
 
-    chunk = KnowledgeChunk(
-        content=text,
-        source_file=filename,
-        source_type="txt",
-        title=filename,
-        page_number=None,
-        section=None,
-        metadata={
-            "element_type": "paragraph",
-            "encoding_normalized": True,
-            "char_count": len(text)
-        }
+    chunks = []
+    current_section = None
+    buffer = []
+
+    # 识别：第一章 人工智能基础
+    chapter_pattern = re.compile(
+        r"^第[一二三四五六七八九十百千\d]+章\s+.+$"
     )
 
-    return [chunk]
+    def flush_buffer():
+        """把暂存的正文保存为知识块。"""
 
-import re
+        if not buffer:
+            return
+
+        content = "\n".join(buffer).strip()
+
+        if content:
+            chunks.append(
+                KnowledgeChunk(
+                    content=content,
+                    source_file=filename,
+                    source_type="txt",
+                    title=filename,
+                    page_number=None,
+                    section=current_section,
+                    metadata={
+                        "element_type": "paragraph",
+                        "encoding_normalized": True,
+                        "char_count": len(content),
+                    }
+                )
+            )
+
+        buffer.clear()
+
+    for line in text.split("\n"):
+        stripped_line = line.strip()
+
+        if chapter_pattern.match(stripped_line):
+            flush_buffer()
+
+            current_section = stripped_line
+
+            chunks.append(
+                KnowledgeChunk(
+                    content=stripped_line,
+                    source_file=filename,
+                    source_type="txt",
+                    title=filename,
+                    page_number=None,
+                    section=current_section,
+                    metadata={
+                        "element_type": "heading",
+                        "heading_level": 1,
+                        "encoding_normalized": True,
+                        "char_count": len(stripped_line),
+                    }
+                )
+            )
+
+            continue
+
+        buffer.append(line)
+
+    flush_buffer()
+
+    return chunks
 
 
 def parse_markdown(file_bytes, filename):

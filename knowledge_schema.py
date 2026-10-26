@@ -1,4 +1,3 @@
-
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
@@ -24,7 +23,12 @@ class KnowledgeChunk:
 
     def to_dict(self) -> dict[str, Any]:
         """将知识片段转换为字典，方便后续导出 JSON。"""
-        return asdict(self)
+
+        data = asdict(self)
+
+        data["metadata"]["char_count"] = len(self.content)
+
+        return data
 
 
 def validate_chunk(chunk: KnowledgeChunk) -> None:
